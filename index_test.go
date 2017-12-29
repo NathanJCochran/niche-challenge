@@ -13,29 +13,20 @@ const (
 var index Index
 
 func BenchmarkNewIndex(b *testing.B) {
-	benchmarks := []struct {
-		concurrency int
-		bufSize     int
-	}{
-		{
-			concurrency: 100,
-			bufSize:     1000,
-		},
-		{
-			concurrency: 250,
-			bufSize:     1000,
-		},
-		{
-			concurrency: 500,
-			bufSize:     1000,
-		},
+	concurrencies := []int{
+		25, 50, 75, 100, 150, 200, 250, 300, 400, 500, 750, 1000, 1250,
 	}
-	for _, benchmark := range benchmarks {
-		name := fmt.Sprintf("Concurrency%dBufSize%d", benchmark.concurrency, benchmark.bufSize)
-		b.Run(name, func(b *testing.B) {
-			for n := 0; n < b.N; n++ {
-				index = NewIndex(urlFile, stopwordFile, benchmark.bufSize, benchmark.concurrency)
-			}
-		})
+	bufSizes := []int{
+		50, 100, 250, 500, 750, 100, 1250,
+	}
+	for _, concurrency := range concurrencies {
+		for _, bufSize := range bufSizes {
+			name := fmt.Sprintf("Concurrency%dBufSize%d", concurrency, bufSize)
+			b.Run(name, func(b *testing.B) {
+				for n := 0; n < b.N; n++ {
+					index = NewIndex(urlFile, stopwordFile, bufSize, concurrency)
+				}
+			})
+		}
 	}
 }

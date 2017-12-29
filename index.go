@@ -108,6 +108,10 @@ func fetchBody(url string) string {
 		log.Fatal(err)
 	}
 
+	if resp.StatusCode != http.StatusOK {
+		log.Fatalf("Received bad status code: %d. Request body:\n%s", resp.StatusCode, body)
+	}
+
 	return string(body)
 }
 
