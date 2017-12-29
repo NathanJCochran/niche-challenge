@@ -24,8 +24,8 @@ func (i Index) Search(word string) []Result {
 
 func NewIndex(urlFile, stopwordFile string, bufSize, concurrency int) Index {
 	urls := urlsFromFile(urlFile, bufSize)
-	stopwords := stopwordsFromFile(stopwordFile)
 	bodies := fetchBodies(urls, concurrency)
+	stopwords := stopwordsFromFile(stopwordFile)
 	index := indexReviews(bodies, stopwords)
 	return index
 }
