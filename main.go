@@ -27,13 +27,9 @@ func main() {
 
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
-		fmt.Print("\nEnter a word: ")
+		fmt.Print("Enter a word: ")
 		if !scanner.Scan() {
-			if err := scanner.Err(); err != nil {
-				log.Fatal(err)
-			}
-			fmt.Println("Goodbye")
-			return
+			break
 		}
 		word := scanner.Text()
 
@@ -42,7 +38,12 @@ func main() {
 		for _, result := range results {
 			fmt.Printf("%d - %s\n", result.Count, result.College)
 		}
+		fmt.Println()
 	}
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("\nGoodbye")
 }
 
 func verbosePrintf(format string, a ...interface{}) {
