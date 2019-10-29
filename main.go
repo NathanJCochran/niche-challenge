@@ -10,10 +10,11 @@ import (
 )
 
 var (
-	urlsFile      = flag.String("u", "./urls.txt", "Path to urls file")
-	stopwordsFile = flag.String("s", "./stopWords.txt", "Path to stopwords file")
-	bufSize       = flag.Int("b", 1250, "Buffer size")
-	concurrency   = flag.Int("c", 250, "Download concurrency")
+	urlsFile      = flag.String("urls", "./urls.txt", "Path to urls file")
+	stopwordsFile = flag.String("stopwords", "./stopWords.txt", "Path to stopwords file")
+	bufSize       = flag.Int("buffer", 1250, "Buffer size")
+	concurrency   = flag.Int("concurrency", 250, "Download concurrency")
+	cache         = flag.String("cache", "", "Cache directory (cache not used if empty)")
 	verbose       = flag.Bool("v", false, "Verbose output")
 )
 
@@ -22,7 +23,7 @@ func main() {
 
 	verbosePrintf("Indexing...\n")
 	start := time.Now()
-	index := NewIndex(*urlsFile, *stopwordsFile, *bufSize, *concurrency)
+	index := NewIndex(*urlsFile, *stopwordsFile, *bufSize, *concurrency, *cache)
 	verbosePrintf("Elapsed: %s\n", time.Since(start))
 
 	scanner := bufio.NewScanner(os.Stdin)

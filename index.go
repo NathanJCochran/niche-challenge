@@ -2,10 +2,12 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"sort"
 	"strings"
 	"sync"
@@ -22,9 +24,15 @@ func (i Index) Search(word string) []Result {
 	return i[strings.ToLower(word)]
 }
 
-func NewIndex(urlFile, stopwordFile string, bufSize, concurrency int) Index {
+func NewIndex(urlFile, stopwordFile string, bufSize, concurrency int, cache string) Index {
+	if cache != "" {
+		if err := os.MkdirAll(cache, 0755); err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	urls := urlsFromFile(urlFile, bufSize)
-	bodies := fetchBodies(urls, concurrency)
+	bodies := fetchBodies(urls, concurrency, cache)
 	stopwords := stopwordsFromFile(stopwordFile)
 	index := indexReviews(bodies, stopwords)
 	return index
@@ -74,7 +82,7 @@ func stopwordsFromFile(stopwordFile string) map[string]struct{} {
 	return stopwords
 }
 
-func fetchBodies(urls <-chan string, concurrency int) <-chan string {
+func fetchBodies(urls <-chan string, concurrency int, cache string) <-chan string {
 	http.DefaultTransport.(*http.Transport).MaxIdleConns = concurrency
 	http.DefaultTransport.(*http.Transport).MaxIdleConnsPerHost = concurrency
 
@@ -85,7 +93,7 @@ func fetchBodies(urls <-chan string, concurrency int) <-chan string {
 		go func() {
 			defer wg.Done()
 			for url := range urls {
-				bodies <- fetchBody(url)
+				bodies <- fetchBody(url, cache)
 			}
 		}()
 	}
@@ -96,7 +104,16 @@ func fetchBodies(urls <-chan string, concurrency int) <-chan string {
 	return bodies
 }
 
-func fetchBody(url string) string {
+func fetchBody(url, cache string) string {
+	file := fmt.Sprintf("%s/%s", cache, path.Base(url))
+	if cache != "" {
+		if body, err := ioutil.ReadFile(file); err == nil {
+			verbosePrintf("Using cached file: %s\n", file)
+			return string(body)
+		}
+	}
+
+	verbosePrintf("Downloading file: %s\n", file)
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
@@ -110,6 +127,13 @@ func fetchBody(url string) string {
 
 	if resp.StatusCode != http.StatusOK {
 		log.Fatalf("Received bad status code: %d. Request body:\n%s", resp.StatusCode, body)
+	}
+
+	if cache != "" {
+		verbosePrintf("Saving to cache: %s\n", file)
+		if err := ioutil.WriteFile(file, body, 0755); err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	return string(body)
