@@ -159,6 +159,9 @@ func indexReviews(bodies <-chan string, stopwords map[string]struct{}) map[strin
 		}
 
 		sort.Slice(results, func(i, j int) bool {
+			if results[i].Count == results[j].Count {
+				return results[i].College < results[j].College
+			}
 			return results[i].Count > results[j].Count
 		})
 		sortedIndex[word] = results
